@@ -41,3 +41,11 @@ if __name__ == "__main__":
     print("Generating audio...")
     audio_file = create_audio(spanish_script, client)
     print(f"Done! Saved to {audio_file}")
+    
+    print("Uploading to Google Drive...")
+    from daily_briefing.core.drive import upload_file
+    file_id = upload_file(audio_file)
+    if file_id:
+        print(f"Successfully uploaded to Google Drive with ID: {file_id}")
+    else:
+        print("Failed to upload to Google Drive.")
