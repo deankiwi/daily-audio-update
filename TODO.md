@@ -14,3 +14,8 @@ pluggins
 - make this repo public
 - run it daily
 
+- I think the llm is struggling with some of the text in the script. either "**Noticias del mundo:**" or "1." made it beep
+```
+**Noticias del mundo:**
+1. El
+```

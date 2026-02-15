@@ -9,7 +9,7 @@ from daily_briefing.plugins.tech_news import get_tech_news
 from daily_briefing.core.llm import generate_script
 from daily_briefing.core.audio import create_audio
 
-def get_briefing_data(lat, lon):
+def get_briefing_data(lat, lon, location_name):
     data = {}
     
     # Stock Market
@@ -22,7 +22,7 @@ def get_briefing_data(lat, lon):
     data["world"] = get_bbc_news()
 
     # Weather
-    data["weather"] = get_weather(lat=lat, lon=lon)
+    data["weather"] = get_weather(lat=lat, lon=lon, location=location_name)
     
     return data
 
@@ -36,9 +36,10 @@ if __name__ == "__main__":
     weather_lon = os.getenv("WEATHER_LON", "-0.79")
     target_language = os.getenv("TARGET_LANGUAGE", "Spanish")
     user_name = os.getenv("USER_NAME", "Dean")
+    user_location = os.getenv("WEATHER_LOCATION_NAME", "Local Area")
 
-    print(f"Fetching data for {user_name} (Location: {weather_lat}, {weather_lon})...")
-    raw_data = get_briefing_data(weather_lat, weather_lon)
+    print(f"Fetching data for {user_name} (Location: {weather_lat}, {weather_lon} - {user_location})...")
+    raw_data = get_briefing_data(weather_lat, weather_lon, user_location)
     
     print(f"Writing script in {target_language}...")
     script = generate_script(raw_data, client, language=target_language, user_name=user_name)
