@@ -39,7 +39,7 @@ if __name__ == "__main__":
     print(f"Script: \n{spanish_script}\n")
     
     print("Generating audio...")
-    audio_file = create_audio(spanish_script, client)
+    audio_file = create_audio(spanish_script, client, language="spanish")
     print(f"Done! Saved to {audio_file}")
     
     print("Uploading to Google Drive...")

@@ -9,3 +9,8 @@ pluggins
 - can I add lyrics to the audio?
 - move weather information, I wanna know the weather through the day, not just the high and low, and weather for the week
 - make an file for AI bots to read
+- don't wipe out file name
+- make it for any language. have the language as a variable
+- make this repo public
+- run it daily
+
