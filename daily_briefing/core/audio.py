@@ -2,7 +2,7 @@ from datetime import date
 
 import os
 
-def create_audio(script, client, language="spainish"):
+def create_audio(script, client, language="spanish"):
     response = client.audio.speech.create(
         model="tts-1",
         voice="alloy", # 'alloy' is usually quite clear and neutral
