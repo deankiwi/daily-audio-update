@@ -49,10 +49,22 @@ if __name__ == "__main__":
     audio_file = create_audio(script, client, language=target_language)
     print(f"Done! Saved to {audio_file}")
     
-    print("Uploading to Google Drive...")
-    from daily_briefing.core.drive import upload_file
-    file_id = upload_file(audio_file)
-    if file_id:
-        print(f"Successfully uploaded to Google Drive with ID: {file_id}")
+    print("Uploading to Google Cloud Storage...")
+    from daily_briefing.core.storage import upload_to_gcs
+    
+    bucket_name = os.getenv("GCS_BUCKET_NAME")
+    if not bucket_name:
+        print("Error: GCS_BUCKET_NAME not found in .env")
     else:
-        print("Failed to upload to Google Drive.")
+        # Upload 1: Specific filename
+        file_name = os.path.basename(audio_file)
+        public_url_1 = upload_to_gcs(audio_file, bucket_name, file_name)
+        
+        # Upload 2: Latest version
+        latest_file_name = f"briefing_{target_language}_latest.mp3"
+        public_url_2 = upload_to_gcs(audio_file, bucket_name, latest_file_name)
+
+        if public_url_1:
+            print(f"Successfully uploaded: {public_url_1}")
+        if public_url_2:
+            print(f"Successfully uploaded latest version: {public_url_2}")
