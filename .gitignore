@@ -3,5 +3,5 @@ __pycache__
 .env
 credentials.json
 token.json
-*.mp3
+recordings/*.mp3
 service_account_key.json

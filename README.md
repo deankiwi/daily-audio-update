@@ -2,6 +2,13 @@
 
 An automated personal briefing system that generates a daily MP3 podcast covering market data, tech news, world news, and weather. The briefing is narrated in Spanish (or your target language) via OpenAI to help with language learning, and automatically uploaded to Google Cloud Storage.
 
+## iPhone Morning Alarm Setup
+
+The video below demonstrates how to configure an iPhone Shortcut to wake you up with this daily briefing. It outlines the necessary setup steps, with the actual generated audio overlaying the visual guide.
+
+<video src="docs/audiogram.mp4" controls title="iPhone Alarm Shortcut Setup"></video>
+
+
 ## Architecture
 
 ```mermaid
