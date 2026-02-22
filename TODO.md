@@ -5,17 +5,14 @@ pluggins
     - a pluggin could be the person name
     - there calander for the week
     - place the audio into google drive or something
-- make briefing audio go into google drive folder or something
 - can I add lyrics to the audio?
-- move weather information, I wanna know the weather through the day, not just the high and low, and weather for the week
-- make an file for AI bots to read
-- don't wipe out file name
-- make it for any language. have the language as a variable
-- make this repo public
-- run it daily
 
 - I think the llm is struggling with some of the text in the script. either "**Noticias del mundo:**" or "1." made it beep
 ```
 **Noticias del mundo:**
 1. El
 ```
+
+- plugin to get a quote of the day
+- plugin get something that happened today in history
+- add today's date to the audio
