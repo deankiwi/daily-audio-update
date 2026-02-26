@@ -1,6 +1,6 @@
 from datetime import date
-
 import os
+from mutagen.id3 import ID3, USLT, ID3NoHeaderError
 
 def create_audio(script, client, language="spanish"):
     response = client.audio.speech.create(
@@ -27,4 +27,22 @@ def create_audio(script, client, language="spanish"):
     with open(filename, "wb") as f:
         for chunk in response.iter_bytes():
             f.write(chunk)
+
+    # Embed the script as USLT lyrics in the MP3
+    try:
+        tags = ID3(filename)
+    except ID3NoHeaderError:
+        tags = ID3()
+
+    # Determine a crude 3-letter language code required by ID3 (eng/spa/etc.)
+    lang_code = "spa" if language.lower().startswith("spa") else "eng"
+
+    tags.add(USLT(
+        encoding=3, # utf-8
+        lang=lang_code,
+        desc='Daily Briefing Script',
+        text=script
+    ))
+    tags.save(filename)
+
     return filename
