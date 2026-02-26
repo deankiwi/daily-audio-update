@@ -28,7 +28,7 @@ def create_audio(script, client, language="spanish"):
         for chunk in response.iter_bytes():
             f.write(chunk)
 
-    # Embed the script as USLT lyrics in the MP3
+    # 1. Embed the script as USLT lyrics in the MP3
     try:
         tags = ID3(filename)
     except ID3NoHeaderError:
@@ -43,6 +43,68 @@ def create_audio(script, client, language="spanish"):
         desc='Daily Briefing Script',
         text=script
     ))
+
+    # 2. Use Whisper to get timestamps for SYLT (Synced Lyrics)
+    print(f"Fetching timestamps for SYLT via Whisper...")
+    with open(filename, "rb") as audio_file:
+        transcript = client.audio.transcriptions.create(
+            file=audio_file,
+            model="whisper-1",
+            response_format="verbose_json",
+            timestamp_granularities=["segment"]
+        )
+
+    # Build the SYLT text array
+    # mutagen.id3.SYLT requires a list of (text, timestamp_in_ms) tuples
+    sylt_data = []
+    
+    # Optional: include an initial timestamp
+    sylt_data.append(("", 0))
+    
+    if hasattr(transcript, 'segments') and transcript.segments:
+        for segment in transcript.segments:
+            # Whisper segment timestamps are in seconds; segment is an object
+            start_ms = int(getattr(segment, 'start', 0) * 1000)
+            text = getattr(segment, 'text', '').strip()
+            sylt_data.append((text, start_ms))
+    elif isinstance(transcript, dict) and 'segments' in transcript:
+        for segment in transcript['segments']:
+            start_ms = int(segment['start'] * 1000)
+            text = segment['text'].strip()
+            sylt_data.append((text, start_ms))
+
+    # 3. Create a traditional .lrc file alongside the MP3
+    lrc_filename = os.path.splitext(filename)[0] + ".lrc"
+    with open(lrc_filename, "w", encoding="utf-8") as lrc_file:
+        # Optional LRC headers
+        lrc_file.write(f"[ti:Daily Briefing]\n")
+        lrc_file.write(f"[ar:AI]\n")
+        lrc_file.write(f"[al:{date.today()}]\n")
+        lrc_file.write(f"[la:{lang_code}]\n")
+        
+        for text, start_ms in sylt_data:
+            if not text:
+                continue
+            
+            # Format: [mm:ss.xx]
+            total_seconds = start_ms / 1000.0
+            minutes = int(total_seconds // 60)
+            seconds = int(total_seconds % 60)
+            hundredths = int((total_seconds * 100) % 100)
+            
+            lrc_file.write(f"[{minutes:02d}:{seconds:02d}.{hundredths:02d}]{text}\n")
+
+    from mutagen.id3 import SYLT
+    
+    tags.add(SYLT(
+        encoding=3, # utf-8
+        lang=lang_code,
+        format=2,   # 2 = milliseconds
+        type=1,     # 1 = lyrics/text
+        desc='Daily Briefing Synced Script',
+        text=sylt_data
+    ))
+
     tags.save(filename)
 
     return filename
