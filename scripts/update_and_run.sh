@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Add user bin directories to PATH for cron (uv is usually in ~/.local/bin or ~/.cargo/bin)
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/usr/local/bin:$PATH"
+
 # Ensure we are in the directory of the script
 cd "$(dirname "$0")"
 
