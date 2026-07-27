@@ -1,7 +1,7 @@
 [project]
 name = "daily-audio-update"
 version = "0.1.0"
-description = "Add your description here"
+description = "Configurable language-drill audio engine"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -13,5 +13,11 @@ dependencies = [
     "google-auth-httplib2>=0.2.0",
     "google-auth-oauthlib>=1.2.0",
     "google-cloud-storage>=3.9.0",
-    "mutagen>=1.47.0",
+    "pydub>=0.25.1",
+    "audioop-lts>=0.2.1; python_version >= '3.13'",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
 ]

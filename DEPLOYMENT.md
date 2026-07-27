@@ -9,11 +9,17 @@ This guide explains how to set up the Daily Audio Update to run automatically ev
     git clone https://github.com/deankiwi/daily-audio-update.git
     cd daily-audio-update
     ```
-2.  **Environment Setup**: Ensure `.env` and Google credentials (`credentials.json`, `token.json`) are present in the project root.
+2.  **Environment Setup**: Ensure `.env`, `config.json`, and Google credentials (`credentials.json`, `token.json`) are present in the project root. Copy `.env.example` → `.env` and `config.example.json` → `config.json`.
 3.  **Install `uv`**: Ensure `uv` is installed on your Pi.
     ```bash
     curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
+4.  **Install `ffmpeg`** (required for audio stitching; the app fails fast at startup if it is missing):
+    ```bash
+    sudo apt install ffmpeg      # Debian/Ubuntu/Raspberry Pi OS
+    # macOS: brew install ffmpeg
+    ```
+    The cron wrapper adds `/opt/homebrew/bin` and `/usr/local/bin` to `PATH` so `ffmpeg` is found under cron.
 
 ## Setup Auto-Update Script
 

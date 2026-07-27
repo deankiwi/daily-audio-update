@@ -1,70 +1,97 @@
+"""Entry point for the daily language-drill briefing.
+
+Usage:
+    uv run main.py            # generate + upload today's briefing
+    uv run main.py --dry-run  # fetch + script only; print the segment timeline
+    uv run main.py --no-upload
+"""
+
+import argparse
 import os
-from openai import OpenAI
+import sys
+
 from dotenv import load_dotenv
+from openai import OpenAI
 
-from daily_briefing.plugins.weather import get_weather
-from daily_briefing.plugins.bbc_news import get_bbc_news
-from daily_briefing.plugins.markets import get_market_data
-from daily_briefing.plugins.tech_news import get_tech_news
-from daily_briefing.core.llm import generate_script
-from daily_briefing.core.audio import create_audio
+from daily_briefing.core import engine
+from daily_briefing.core.catalog import LocalCatalog
+from daily_briefing.core.config import ConfigError, load_config, validate_config
+from daily_briefing.core.storage import upload_to_gcs
+from daily_briefing.core.tts import TTSClient
 
-def get_briefing_data(lat, lon, location_name):
-    data = {}
-    
-    # Stock Market
-    data["market"] = get_market_data()
 
-    # Tech News
-    data["tech"] = get_tech_news()
+def _print_dry_run(rows):
+    print("\nPlanned segment timeline (no audio generated):\n")
+    header = f"{'#':>3}  {'block':<10} {'lang':<4} {'cache':<5} {'dur':>6} {'pause':>6}  text"
+    print(header)
+    print("-" * len(header))
+    for i, r in enumerate(rows, 1):
+        text = r["text"] if len(r["text"]) <= 50 else r["text"][:47] + "..."
+        print(f"{i:>3}  {r['block']:<10} {r['lang']:<4} {r['cache']:<5} "
+              f"{r['duration_ms']:>6} {r['pause_ms']:>6}  {text}")
+    total = rows[-1]["offset_ms"] + rows[-1]["duration_ms"] + rows[-1]["pause_ms"] if rows else 0
+    misses = sum(1 for r in rows if r["cache"] == "miss")
+    print(f"\n{len(rows)} segments, {misses} would call TTS (cache miss), "
+          f"~{total / 1000:.0f}s total.")
 
-    # World News (BBC)
-    data["world"] = get_bbc_news()
 
-    # Weather
-    data["weather"] = get_weather(lat=lat, lon=lon, location=location_name)
-    
-    return data
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate the daily language-drill briefing.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Fetch + script only; print the timeline without generating audio.")
+    parser.add_argument("--no-upload", action="store_true", help="Skip the GCS upload.")
+    parser.add_argument("--config", default="config.json", help="Path to config.json.")
+    args = parser.parse_args()
 
-# MAIN EXECUTION
-if __name__ == "__main__":
     load_dotenv()
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    
-    # Load configuration
-    weather_lat = os.getenv("WEATHER_LAT", "51.21")
-    weather_lon = os.getenv("WEATHER_LON", "-0.79")
-    target_language = os.getenv("TARGET_LANGUAGE", "Spanish")
-    user_name = os.getenv("USER_NAME", "Dean")
-    user_location = os.getenv("WEATHER_LOCATION_NAME", "Local Area")
 
-    print(f"Fetching data for {user_name} (Location: {weather_lat}, {weather_lon} - {user_location})...")
-    raw_data = get_briefing_data(weather_lat, weather_lon, user_location)
-    
-    print(f"Writing script in {target_language}...")
-    script = generate_script(raw_data, client, language=target_language, user_name=user_name)
-    print(f"Script: \n{script}\n")
-    
-    print("Generating audio...")
-    audio_file = create_audio(script, client, language=target_language)
-    print(f"Done! Saved to {audio_file}")
-    
-    print("Uploading to Google Cloud Storage...")
-    from daily_briefing.core.storage import upload_to_gcs
-    
-    bucket_name = os.getenv("GCS_BUCKET_NAME")
-    if not bucket_name:
-        print("Error: GCS_BUCKET_NAME not found in .env")
+    try:
+        config = load_config(args.config)
+        validate_config(config)
+    except ConfigError as e:
+        print(f"Config error:\n{e}", file=sys.stderr)
+        return 2
+
+    llm_key = os.getenv(config.llm.get("api_key_env", "OPENAI_API_KEY"))
+    llm_client = OpenAI(api_key=llm_key, base_url=config.llm.get("base_url") or None)
+
+    tts_key = os.getenv("OPENAI_API_KEY")
+    tts = TTSClient(OpenAI(api_key=tts_key), config.tts_model, LocalCatalog("cache"))
+
+    print(f"Building briefing for {config.user_name} in {config.target_language} "
+          f"({config.dialect})...")
+
+    try:
+        result = engine.run(config, llm_client, tts, dry_run=args.dry_run)
+    except engine.RunAborted as e:
+        print(f"\nRun aborted: {e}", file=sys.stderr)
+        return 1
+
+    print(f"\nBlocks: {result.summary_line()}")
+
+    if args.dry_run:
+        _print_dry_run(engine.dry_run_timeline(result, tts, config))
+        return 0
+
+    print(f"Saved: {result.mp3_path}")
+
+    bucket = os.getenv("GCS_BUCKET_NAME")
+    if args.no_upload:
+        print("Skipping upload (--no-upload).")
+    elif not bucket:
+        print("GCS_BUCKET_NAME not set; skipping upload.")
     else:
-        # Upload 1: Specific filename
-        file_name = os.path.basename(audio_file)
-        public_url_1 = upload_to_gcs(audio_file, bucket_name, file_name)
-        
-        # Upload 2: Latest version
-        latest_file_name = f"briefing_{target_language}_latest.mp3"
-        public_url_2 = upload_to_gcs(audio_file, bucket_name, latest_file_name)
+        dated_name = os.path.basename(result.mp3_path)
+        latest_name = f"briefing_{config.output_language_label}_latest.mp3"
+        url_dated = upload_to_gcs(result.mp3_path, bucket, dated_name)
+        url_latest = upload_to_gcs(result.mp3_path, bucket, latest_name)
+        if url_dated:
+            print(f"Uploaded: {url_dated}")
+        if url_latest:
+            print(f"Uploaded latest: {url_latest}")
 
-        if public_url_1:
-            print(f"Successfully uploaded: {public_url_1}")
-        if public_url_2:
-            print(f"Successfully uploaded latest version: {public_url_2}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

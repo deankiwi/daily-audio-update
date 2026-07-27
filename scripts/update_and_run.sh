@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Add user bin directories to PATH for cron (uv is usually in ~/.local/bin or ~/.cargo/bin)
-export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/usr/local/bin:$PATH"
+# Add user bin directories to PATH for cron.
+# uv is usually in ~/.local/bin or ~/.cargo/bin; ffmpeg (required) is in
+# /opt/homebrew/bin (Apple Silicon) or /usr/local/bin (Intel/Linux).
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 # Ensure we are in the directory of the script
 cd "$(dirname "$0")"

@@ -1,0 +1,95 @@
+{
+  "user": {
+    "name": "Dean"
+  },
+  "language": {
+    "target": "Spanish",
+    "native": "English",
+    "target_code": "es",
+    "native_code": "en",
+    "dialect": "Latin American",
+    "level": "A1/A2"
+  },
+  "llm": {
+    "base_url": null,
+    "model": "gpt-4o-mini",
+    "api_key_env": "OPENAI_API_KEY"
+  },
+  "tts": {
+    "model": "gpt-4o-mini-tts",
+    "voices": {
+      "es": "nova",
+      "en": "alloy"
+    },
+    "instructions": {
+      "es": "Speak with a natural, native Latin American Spanish accent. Clear and warm, at a moderate pace suitable for a language learner.",
+      "en": "Speak in clear, natural English at a calm, steady pace."
+    }
+  },
+  "defaults": {
+    "pattern": ["es", "en", "es"],
+    "pause_after_each": true,
+    "target_sentences": 2,
+    "pause": {
+      "target_factor": 1.1,
+      "native_ms": 1000
+    }
+  },
+  "output": {
+    "language_label": "Spanish"
+  },
+  "blocks": [
+    {
+      "id": "greeting",
+      "source": "static",
+      "pattern": ["es"],
+      "pause_after_each": false,
+      "sentences": [
+        { "es": "Buenos días, {name}.", "en": "Good morning, {name}." }
+      ]
+    },
+    {
+      "id": "date",
+      "source": "static",
+      "sentences": [
+        { "es": "Hoy es {weekday_es}, {date_es}.", "en": "Today is {date_en}." }
+      ]
+    },
+    {
+      "id": "weather",
+      "source": "weather",
+      "prompt": "Summarise today's weather forecast in two short, simple sentences a beginner can follow. Mention the temperature and whether it will rain.",
+      "target_sentences": 2,
+      "settings": {
+        "lat": 51.21,
+        "lon": -0.79,
+        "location": "Farnham"
+      }
+    },
+    {
+      "id": "markets",
+      "source": "markets",
+      "prompt": "Summarise the stock market update in one short, simple sentence a beginner can follow.",
+      "target_sentences": 1
+    },
+    {
+      "id": "tech",
+      "source": "tech",
+      "prompt": "Summarise the top tech headlines in two short, simple sentences a beginner can follow. Keep technical terms simple.",
+      "target_sentences": 2
+    },
+    {
+      "id": "news",
+      "source": "bbc",
+      "prompt": "Summarise the top world news headlines in two short, simple sentences a beginner can follow.",
+      "target_sentences": 2
+    },
+    {
+      "id": "signoff",
+      "source": "static",
+      "sentences": [
+        { "es": "¡Que tengas un buen día, {name}!", "en": "Have a good day, {name}!" }
+      ]
+    }
+  ]
+}
