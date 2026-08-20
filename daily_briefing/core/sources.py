@@ -9,6 +9,7 @@ from ..plugins.weather import get_weather
 from ..plugins.markets import get_market_data
 from ..plugins.tech_news import get_tech_news
 from ..plugins.bbc_news import get_bbc_news
+from ..plugins.tides import get_tides
 
 STATIC_SOURCE = "static"
 
@@ -39,3 +40,4 @@ register("weather", lambda s: get_weather(
 register("markets", lambda s: get_market_data())
 register("tech", lambda s: get_tech_news())
 register("bbc", lambda s: get_bbc_news())
+register("tides", lambda s: get_tides(s))

@@ -67,6 +67,15 @@
       }
     },
     {
+      "id": "tides",
+      "source": "tides",
+      "prompt": "Tell me the time and height of the next high tide in one short, simple sentence a beginner can follow.",
+      "target_sentences": 1,
+      "settings": {
+        "name": "Warrenpoint"
+      }
+    },
+    {
       "id": "markets",
       "source": "markets",
       "prompt": "Summarise the stock market update in one short, simple sentence a beginner can follow.",
